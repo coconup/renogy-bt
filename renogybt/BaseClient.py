@@ -129,12 +129,14 @@ class BaseClient:
         self.__stop_service() if connectFailed else self.disconnect()
 
     def __on_connect_fail(self, error):
-        logging.error(f"Connection failed: {error}")
         self.__stop_service()
+        if error != 'Disconnected':
+            logging.error(f"Connection failed: {error}")
+            os._exit(os.EX_OK)
 
     def __stop_service(self):
         if self.poll_timer is not None and self.poll_timer.is_alive():
             self.poll_timer.cancel()
         if self.poll_timer is not None: self.read_timer.cancel()
         self.manager.stop()
-        os._exit(os.EX_OK)
+        # os._exit(os.EX_OK)
