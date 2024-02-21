@@ -35,8 +35,8 @@ BATTERY_TYPE = {
 }
 
 class RoverClient(BaseClient):
-    def __init__(self, config, on_data_callback=None):
-        super().__init__(config)
+    def __init__(self, config, on_data_callback=None, on_connect_fail_callback=None):
+        super().__init__(config, on_connect_fail_callback)
         self.on_data_callback = on_data_callback
         self.data = {}
         self.sections = [

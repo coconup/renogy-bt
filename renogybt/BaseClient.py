@@ -16,7 +16,7 @@ WRITE_CHAR_UUID  = "0000ffd1-0000-1000-8000-00805f9b34fb"
 READ_TIMEOUT = 30 # (seconds)
 
 class BaseClient:
-    def __init__(self, config):
+    def __init__(self, config, on_connect_fail_callback=None):
         self.config: configparser.ConfigParser = config
         self.manager = None
         self.device = None
@@ -26,6 +26,7 @@ class BaseClient:
         self.device_id = self.config['device'].getint('device_id')
         self.sections = []
         self.section_index = 0
+        self.on_connect_fail_callback = on_connect_fail_callback
         logging.info(f"Init {self.__class__.__name__}: {self.config['device']['alias']} => {self.config['device']['mac_addr']}")
 
     def connect(self):
@@ -129,14 +130,15 @@ class BaseClient:
         self.__stop_service() if connectFailed else self.disconnect()
 
     def __on_connect_fail(self, error):
-        self.__stop_service()
-        if error != 'Disconnected':
+        if self.on_connect_fail_callback is not None:
+            self.on_connect_fail_callback(self, error)
+        else:
             logging.error(f"Connection failed: {error}")
-            os._exit(os.EX_OK)
+            self.__stop_service()
 
     def __stop_service(self):
         if self.poll_timer is not None and self.poll_timer.is_alive():
             self.poll_timer.cancel()
         if self.poll_timer is not None: self.read_timer.cancel()
         self.manager.stop()
-        # os._exit(os.EX_OK)
+        os._exit(os.EX_OK)
